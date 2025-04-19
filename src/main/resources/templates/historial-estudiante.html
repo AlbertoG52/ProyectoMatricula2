@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Académico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            margin: 2rem auto;
+            width: 80%;
+            max-width: 1200px;
+        }
+        .titulo {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .back-button {
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #1976D2;
+        }
+        .button-container {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .nombre-estudiante {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="titulo">Historial Académico</h1>
+
+    <div>
+        <p class="nombre-estudiante">Estudiante: <span th:text="${estudiante.nombreEstudiante}"></span></p>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Curso</th>
+            <th>Estado</th>
+            <th>Semestre</th>
+            <th>Año</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="curso : ${estudiante.historialAcademico}">
+            <td th:text="${curso['Nombre_Curso']}"></td>
+            <td th:text="${curso['Estado']}"></td>
+            <td th:text="${curso['Semestre']}"></td>
+            <td th:text="${curso['Año']}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="button-container">
+        <a th:href="@{/estudiantes}" class="back-button">Volver a la lista</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalles del Estudiante</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .detalle-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e2e2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-4">Detalles de <span th:text="${estudiante.nombreEstudiante}">Nombre</span></h4>
+
+                <div class="detalle-item"><strong>Estudiante:</strong> <span th:text="${estudiante.nombreEstudiante}"></span></div>
+                <div class="detalle-item"><strong>Teléfono:</strong> <span th:text="${estudiante.telefonoEstudiante}"></span></div>
+                <div class="detalle-item"><strong>Correo:</strong> <span th:text="${estudiante.correoEstudiante}"></span></div>
+
+                <!-- Mostrar los encargados de manera similar a los detalles del estudiante -->
+                <div class="detalle-item"><strong>Encargados:</strong></div>
+                <div th:each="encargado : ${estudiante.encargados}" class="card mb-3">
+                    <div class="card-body">
+                        <div class="detalle-item"><strong>Nombre:</strong> <span th:text="${encargado.nombreEncargado}"></span></div>
+                        <div class="detalle-item"><strong>Teléfono:</strong> <span th:text="${encargado.telefonoEncargado}"></span></div>
+                        <div class="detalle-item"><strong>Correo:</strong> <span th:text="${encargado.correoEncargado}"></span></div>
+                    </div>
+                </div>
+
+                <div class="acciones">
+                    <a th:href="@{/estudiantes/editar/{nombreEstudiante}(nombreEstudiante=${estudiante.nombreEstudiante})}" class="btn btn-success">Editar</a>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmModal"
+                            th:data-nombre="${estudiante.nombreEstudiante}">
+                        Borrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 text-start">
+            <a th:href="@{/estudiantes}" class="btn btn-primary">Volver a Estudiantes</a>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro que quieres eliminar toda la información del estudiante <span id="studentName"></span>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let studentName = '';
+
+        document.querySelectorAll('button[data-bs-toggle="modal"]').forEach(button => {
+            button.addEventListener('click', function () {
+                studentName = this.getAttribute('data-nombre');
+                document.getElementById('studentName').textContent = studentName;
+            });
+        });
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            const encodedName = encodeURIComponent(studentName);
+            window.location.href = "/detalles/eliminar?nombreEstudiante=" + encodedName;
+        });
+    </script>
+</body>
+</html>

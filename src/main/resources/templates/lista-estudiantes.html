@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lista de Estudiantes</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f5f5f5;
+            }
+            .container {
+                margin: 2rem auto;
+                width: 80%;
+                max-width: 1200px;
+            }
+            .titulo {
+                text-align: center;
+                margin-bottom: 2rem;
+                color: #333;
+            }
+            .search-bar {
+                display: flex;
+                justify-content: flex-start;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            .search-bar input {
+                padding: 0.5rem;
+                font-size: 1rem;
+                flex-grow: 1;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+            }
+            .search-bar button {
+                padding: 0.5rem 1rem;
+                font-size: 1rem;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-left: 1rem;
+            }
+            .search-bar button:hover {
+                background-color: #45a049;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 2rem;
+            }
+            th, td {
+                padding: 1rem;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background-color: #4CAF50;
+                color: white;
+            }
+            .action-button {
+                padding: 0.4rem 0.8rem;
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                text-decoration: none;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                font-size: 0.9rem;
+            }
+            .action-button:hover {
+                background-color: #1976D2;
+            }
+            .button-container {
+                margin-top: 2rem;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .add-button {
+                padding: 1rem 2rem;
+                font-size: 1.2rem;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                text-decoration: none;
+                transition: background-color 0.3s;
+            }
+            .add-button:hover {
+                background-color: #45a049;
+            }
+            .button-group {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            /* ✅ Evitar que el nombre se divida en dos líneas */
+            .nombre-estudiante {
+                white-space: nowrap;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="titulo">Lista de Estudiantes</h1>
+
+            <!-- Barra de búsqueda -->
+            <div class="search-bar">
+                <form th:action="@{/buscar-estudiante}" method="get" style="display: flex; width: 100%;">
+                    <input type="text" name="search" placeholder="Buscar estudiante..." th:value="${searchQuery}">
+                    <button type="submit">Buscar</button>
+                </form>
+            </div>
+
+            <!-- Tabla de estudiantes -->
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Nombre</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Iterar sobre la lista de estudiantes y mostrar nombre y botones -->
+                    <tr th:each="estudiante : ${estudiantes}">
+                        <td class="nombre-estudiante" th:text="${estudiante.nombreEstudiante}"></td>
+                        <td>
+                            <div class="button-group">
+                                <a th:href="@{/detalles(nombreEstudiante=${estudiante.nombreEstudiante})}" class="action-button">Ver información del estudiante</a>
+                                <a th:href="@{/historial-academico-estudiante(nombreEstudiante=${estudiante.nombreEstudiante})}" class="action-button">Ver Historial académico</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Botón para agregar estudiante -->
+            <div class="button-container" style="gap: 1rem;">
+                <a th:href="@{/estudiantes/nuevo}" class="add-button">Agregar Estudiante</a>
+                <a th:href="@{/dashboard}" class="add-button" style="background-color: #9E9E9E;">Volver</a>
+            </div>
+
+        </div>
+    </body>
+</html>

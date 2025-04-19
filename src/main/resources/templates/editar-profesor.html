@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Profesor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 2rem auto;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 0.3rem;
+        }
+
+        button {
+            margin-top: 2rem;
+            padding: 0.7rem 1.5rem;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error-msg {
+            color: red;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Editar Profesor</h2>
+
+    <!-- Mensaje de error -->
+    <div th:if="${error}" class="error-msg">
+        <p th:text="${error}"></p>
+    </div>
+
+    <form th:action="@{/profesores/editar}" method="post" onsubmit="return validarCampos()">
+        <!-- Campo oculto con nombre original -->
+        <input type="hidden" name="nombreOriginal" th:value="${nombreOriginal}"/>
+
+        <!-- Nombre del Profesor -->
+        <label for="nombreProfesor">Nombre del Profesor</label>
+        <input type="text" id="nombreProfesor" name="nombreProfesor" th:value="${profesor.nombreProfesor}" required>
+
+        <!-- Correo del Profesor -->
+        <label for="correoProfesor">Correo del Profesor</label>
+        <input type="email" id="correoProfesor" name="correoProfesor" th:value="${profesor.correoProfesor}" required>
+
+        <!-- Profesión / Curso -->
+        <label for="profesionProfesor">Profesión</label>
+        <select id="profesionProfesor" name="profesionProfesor" required>
+            <option value="">-- Selecciona una profesión --</option>
+            <option th:each="curso : ${cursos}"
+                    th:value="${curso.nombreCurso}"
+                    th:text="${curso.nombreCurso}"
+                    th:selected="${curso.nombreCurso == profesor.profesionProfesor}">
+            </option>
+        </select>
+
+        <button type="submit">Guardar Cambios</button>
+    </form>
+</div>
+
+<script>
+    function validarCampos() {
+        const inputs = document.querySelectorAll("input[type='text'], input[type='email']");
+        for (let input of inputs) {
+            if (input.value.trim() === "") {
+                alert("Todos los campos deben estar llenos.");
+                input.focus();
+                return false;
+            }
+        }
+
+        const profesion = document.getElementById("profesionProfesor");
+        if (profesion.value.trim() === "") {
+            alert("Por favor, selecciona una profesión válida.");
+            profesion.focus();
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
+</body>
+</html>
