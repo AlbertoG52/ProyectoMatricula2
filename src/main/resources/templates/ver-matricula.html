@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Ver Matrículas</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 2rem;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+                background-color: #ffffff;
+                padding: 2rem;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            h2 {
+                text-align: center;
+                color: #333;
+                margin-bottom: 2rem;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1rem;
+            }
+            th, td {
+                padding: 0.75rem;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background-color: #4CAF50;
+                color: white;
+            }
+            tr:hover {
+                background-color: #f1f1f1;
+            }
+            .back-button {
+                display: inline-block;
+                margin-top: 2rem;
+                padding: 0.6rem 1.2rem;
+                background-color: #4CAF50;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+            }
+            .back-button:hover {
+                background-color: #45a049;
+            }
+
+            .ver-button {
+                padding: 0.5rem 1rem;
+                background-color: #2196F3;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                font-size: 0.9rem;
+                display: inline-block;
+            }
+
+            .ver-button:hover {
+                background-color: #0b7dda;
+            }
+            
+            /* Alineación de columnas */
+            th:nth-child(1), td:nth-child(1) {
+                text-align: left; /* Semestre alineado a la izquierda */
+            }
+            
+            th:nth-child(2), td:nth-child(2) {
+                text-align: center; /* Año centrado */
+            }
+            
+            th:nth-child(3), td:nth-child(3) {
+                text-align: center; /* Periodo centrado */
+            }
+            
+            .periodo-cell {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Periodos de Matrícula</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Semestre</th>
+                        <th>Año</th>
+                        <th>Periodo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="periodo : ${periodos}">
+                        <td th:text="${periodo.semestre}">Semestre</td>
+                        <td th:text="${periodo.anio}">Año</td>
+                        <td class="periodo-cell">
+                            <a th:href="@{/matricula/verPeriodo(semestre=${periodo.semestre}, anio=${periodo.anio})}" class="ver-button">Ver Periodo</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a th:href="@{/matricula}" class="back-button">Volver al Panel</a>
+        </div>
+    </body>
+</html>

@@ -1,31 +1,42 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.example.demo.service;
 
-import com.example.demo.entity.GeneracionEntity;
-import com.example.demo.entity.GrupoEntity;
+import com.example.demo.entity.PeriodoEntity;
 import com.example.demo.entity.SeccionEntity;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-import org.hibernate.dialect.OracleTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- *
- * @author guerr
- */
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.dialect.OracleTypes;
+
 @Service
-public class MatriculaService {
+public class PeriodoService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    public List<PeriodoEntity> obtenerPeriodosMatricula() {
+        return jdbcTemplate.execute((Connection con) -> {
+            List<PeriodoEntity> periodos = new ArrayList<>();
+
+            try (CallableStatement cs = con.prepareCall("{ call mostrar_Matriculas(?) }")) {
+                cs.registerOutParameter(1, OracleTypes.CURSOR);
+                cs.execute();
+
+                try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                    while (rs.next()) {
+                        PeriodoEntity periodo = new PeriodoEntity();
+                        periodo.setSemestre(rs.getString("Semestre"));
+                        periodo.setAnio(rs.getInt("Año"));
+                        periodos.add(periodo);
+                    }
+                }
+            }
+            return periodos;
+        });
+    }
 
     public List<SeccionEntity> obtenerSeccionesPorPeriodo(String semestre, int anio) {
         return jdbcTemplate.execute((Connection con) -> {
@@ -46,6 +57,7 @@ public class MatriculaService {
                     }
                 }
             }
+
             return secciones;
         });
     }
