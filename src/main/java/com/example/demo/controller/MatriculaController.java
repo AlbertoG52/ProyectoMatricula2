@@ -9,6 +9,7 @@ import com.example.demo.entity.SeccionEntity;
 import com.example.demo.service.MatriculaService;
 import com.example.demo.service.PeriodoService;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -46,6 +47,58 @@ public class MatriculaController {
         model.addAttribute("anio", anio);
         model.addAttribute("secciones", secciones);
         return "ver-secciones-por-periodo";
+    }
+
+    @GetMapping("/verPeriodo/{id}")
+    public String verHorarioSeccion(
+            @PathVariable("id") Long id,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> horario = matriculaService.obtenerHorarioPorSeccion(id);
+
+        // Pasar todos los parámetros al modelo
+        model.addAttribute("horario", horario);
+        model.addAttribute("idSeccion", id);  // Necesario para los botones
+        model.addAttribute("semestre", semestre);  // Necesario para los botones
+        model.addAttribute("anio", anio);  // Necesario para los botones
+
+        return "ver-horario-seccion";
+    }
+
+    @GetMapping("/verEstudiantes/{id}")
+    public String verEstudiantesSeccion(
+            @PathVariable("id") Long idSeccion,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> estudiantes = matriculaService.obtenerEstudiantesPorSeccionPeriodo(idSeccion, semestre, anio);
+
+        model.addAttribute("estudiantes", estudiantes);
+        model.addAttribute("idSeccion", idSeccion);
+        model.addAttribute("semestre", semestre);
+        model.addAttribute("anio", anio);
+
+        return "estudiantes-seccion";
+    }
+
+    @GetMapping("/verProfesores/{id}")
+    public String verProfesoresSeccion(
+            @PathVariable("id") Long idSeccion,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> profesores = matriculaService.obtenerProfesoresPorSeccionPeriodo(idSeccion, semestre, anio);
+
+        model.addAttribute("profesores", profesores);
+        model.addAttribute("idSeccion", idSeccion);
+        model.addAttribute("semestre", semestre);
+        model.addAttribute("anio", anio);
+
+        return "profesores-seccion";
     }
 
     // Mostrar el panel principal de matrícula

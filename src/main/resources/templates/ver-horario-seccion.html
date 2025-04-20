@@ -2,18 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
-        <title>Ver Secciones por Periodo</title>
+        <title>Horario de Sección</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
                 background-color: #f5f5f5;
-                margin: 0;
                 padding: 2rem;
             }
             .container {
                 max-width: 800px;
                 margin: auto;
-                background-color: #ffffff;
+                background: white;
                 padding: 2rem;
                 border-radius: 10px;
                 box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -21,15 +20,15 @@
             h2 {
                 text-align: center;
                 color: #333;
-                margin-bottom: 2rem;
             }
             table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 1rem;
+                margin-top: 2rem;
             }
             th, td {
                 padding: 0.75rem;
+                text-align: center;
                 border-bottom: 1px solid #ddd;
             }
             th {
@@ -40,8 +39,8 @@
                 background-color: #f1f1f1;
             }
             .back-button {
-                display: inline-block;
                 margin-top: 2rem;
+                display: inline-block;
                 padding: 0.6rem 1.2rem;
                 background-color: #4CAF50;
                 color: white;
@@ -52,53 +51,55 @@
                 background-color: #45a049;
             }
 
-            .ver-button {
-                padding: 0.5rem 1rem;
+            .secondary-button {
+                display: inline-block;
+                margin-top: 2rem;
+                padding: 0.6rem 1.2rem;
                 background-color: #2196F3;
                 color: white;
                 text-decoration: none;
                 border-radius: 5px;
-                font-size: 0.9rem;
-                display: inline-block;
+                margin-left: 1rem;
             }
 
-            .ver-button:hover {
+            .secondary-button:hover {
                 background-color: #0b7dda;
             }
 
-            /* Alineación de columnas */
-            th:nth-child(1), td:nth-child(1) {
-                text-align: left; /* Nombre de Sección alineado a la izquierda */
-            }
-
-            th:nth-child(2), td:nth-child(2) {
-                text-align: center; /* Acciones centradas */
-            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h2 th:text="'Secciones de Matrícula - Periodo: ' + ${semestre} + ' ' + ${anio}">Texto por defecto</h2>
+            <h2>Horario de Sección</h2>
 
             <table>
                 <thead>
                     <tr>
-                        <th>Nombre Sección</th>
-                        <th>Acciones</th>
+                        <th>Día</th>
+                        <th>Hora</th>
+                        <th>Curso</th>
+                        <th>Sección</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="seccion : ${secciones}">
-                        <td th:text="${seccion.nombreSeccion}">Nombre Sección</td>
-                        <td class="periodo-cell">
-                            <a th:href="@{/matricula/verPeriodo/{id}(id=${seccion.id}, semestre=${semestre}, anio=${anio})}" 
-                               class="ver-button">Ver Detalles</a>
-                        </td>
+                    <tr th:each="fila : ${horario}">
+                        <td th:text="${fila.dia}">Lunes</td>
+                        <td th:text="${fila.hora}">08:00</td>
+                        <td th:text="${fila.curso}">Matemáticas</td>
+                        <td th:text="${fila.seccion}">2024 - A</td>
                     </tr>
                 </tbody>
             </table>
-
-            <a th:href="@{/matricula/ver}" class="back-button">Volver al Periodo</a>
+            <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <a th:href="@{/matricula/verPeriodo(semestre=${semestre}, anio=${anio})}" class="back-button">Volver</a>
+                <div>
+                    <!-- Usar parámetros query después del path variable -->
+                    <a th:href="@{|/matricula/verEstudiantes/${idSeccion}?semestre=${semestre}&anio=${anio}|}" 
+                       class="secondary-button">Ver Estudiantes</a>
+                    <a th:href="@{|/matricula/verProfesores/${idSeccion}?semestre=${semestre}&anio=${anio}|}" 
+                       class="secondary-button">Ver Profesores</a>
+                </div>
+            </div>
         </div>
     </body>
 </html>

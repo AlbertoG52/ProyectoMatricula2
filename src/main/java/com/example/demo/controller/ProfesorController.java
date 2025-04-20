@@ -10,6 +10,7 @@ import com.example.demo.service.CursoService;
 import com.example.demo.service.ProfesorService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -70,6 +71,20 @@ public class ProfesorController {
         model.addAttribute("searchQuery", nombre);
 
         return "buscar-profesores"; // devuelve la vista buscar-estudiante.html
+    }
+
+    @GetMapping("/cursos-secciones-profesor")
+    public String mostrarCursosYSecciones(
+            @RequestParam("nombreProfesor") String nombreProfesor,
+            Model model
+    ) {
+        List<Map<String, Object>> cursosSecciones = profesorService
+                .obtenerCursosYSeccionesPorProfesor(nombreProfesor);
+
+        model.addAttribute("nombreProfesor", nombreProfesor);
+        model.addAttribute("cursosSecciones", cursosSecciones);
+
+        return "cursos-secciones-profesor";
     }
 
     @GetMapping("/informacion-profesor")

@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -79,6 +80,33 @@ public class ProfesorService {
         });
     }
 
+    public List<Map<String, Object>> obtenerCursosYSeccionesPorProfesor(String nombreProfesor) {
+        return jdbcTemplate.execute((Connection con) -> {
+            List<Map<String, Object>> resultados = new ArrayList<>();
+
+            try (CallableStatement cs = con.prepareCall("{call Mostrar_Profesores_Secciones_Cursos(?)}")) {
+                cs.registerOutParameter(1, OracleTypes.CURSOR);
+                cs.execute();
+
+                try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                    while (rs.next()) {
+                        // Filtramos solo los resultados del profesor solicitado
+                        if (rs.getString("Nombre_Profesor").equalsIgnoreCase(nombreProfesor)) {
+                            Map<String, Object> item = new HashMap<>();
+                            item.put("nombreProfesor", rs.getString("Nombre_Profesor"));
+                            item.put("nombreCurso", rs.getString("Nombre_Curso"));
+                            item.put("nombreSeccion", rs.getString("Nombre_Seccion"));
+                            resultados.add(item);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return resultados;
+        });
+    }
+
     // Método para llamar al procedimiento almacenado y obtener los datos del estudiante y encargados    
     public ProfesorEntity obtenerInformacionProfesores(String nombreProfesor) {
         return jdbcTemplate.execute((Connection con) -> {
@@ -119,7 +147,7 @@ public class ProfesorService {
         // Después de la inserción, retornamos el objeto ProfesorEntity
         return profesor;
     }
-    
+
     // Modificar profesor
     public ProfesorEntity modificarProfesor(String nombreProfesorOriginal, ProfesorEntity profesor) {
         jdbcTemplate.update("CALL PKG_PROFESOR_CRUD.Modificar_Profesor(?, ?, ?, ?)",
@@ -130,10 +158,10 @@ public class ProfesorService {
 
         return profesor;
     }
-    
+
     // Eliminar profesor 
     public void eliminarProfesor(String nombreProfesor) {
         jdbcTemplate.update("CALL PKG_PROFESOR_CRUD.Eliminar_Profesor(?)", nombreProfesor);
     }
-    
+
 }
