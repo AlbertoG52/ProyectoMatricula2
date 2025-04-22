@@ -164,4 +164,56 @@ public class ProfesorService {
         jdbcTemplate.update("CALL PKG_PROFESOR_CRUD.Eliminar_Profesor(?)", nombreProfesor);
     }
 
+    public List<Map<String, Object>> obtenerProfesoresConProfesion() {
+        return jdbcTemplate.execute((Connection conn) -> {
+            List<Map<String, Object>> profesores = new ArrayList<>();
+
+            try (CallableStatement cs = conn.prepareCall(
+                    "{ call Mostrar_Nombres_Profesores_Con_Profesion(?) }")) {
+
+                cs.registerOutParameter(1, OracleTypes.CURSOR);
+                cs.execute();
+
+                try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                    while (rs.next()) {
+                        Map<String, Object> profesor = new HashMap<>();
+                        profesor.put("id", rs.getLong("ID_Profesor"));
+                        profesor.put("nombre", rs.getString("Nombre_Profesor"));
+                        profesor.put("profesion", rs.getString("Profesion"));
+                        profesores.add(profesor);
+                    }
+                }
+            }
+            return profesores;
+        });
+    }
+
+    public List<Map<String, Object>> obtenerProfesoresPorSeccionYPeriodo(String seccion, String semestre, int anio) {
+        return jdbcTemplate.execute((Connection conn) -> {
+            List<Map<String, Object>> profesores = new ArrayList<>();
+
+            try (CallableStatement cs = conn.prepareCall(
+                    "{ call Obtener_Profesores_Por_Seccion_Y_Periodo(?, ?, ?, ?) }")) {
+
+                cs.setString(1, seccion);      // ej. "7-A"
+                cs.setString(2, semestre);     // ej. "I"
+                cs.setInt(3, anio);            // ej. 2025
+                cs.registerOutParameter(4, OracleTypes.CURSOR);
+
+                cs.execute();
+
+                try (ResultSet rs = (ResultSet) cs.getObject(4)) {
+                    while (rs.next()) {
+                        Map<String, Object> profesor = new HashMap<>();
+                        profesor.put("nombre", rs.getString("Nombre_Profesor"));
+                        profesor.put("profesion", rs.getString("Profesion"));
+                        profesores.add(profesor);
+                    }
+                }
+            }
+
+            return profesores;
+        });
+    }
+
 }

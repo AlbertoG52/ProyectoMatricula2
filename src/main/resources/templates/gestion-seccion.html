@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestión de Sección</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+        <style>
+            .checkbox-cell {
+                width: 50px;
+                text-align: center;
+            }
+            .section-table {
+                margin: 20px 0;
+            }
+            .section-title {
+                color: #495057;
+                border-bottom: 2px solid #dee2e6;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            .action-buttons {
+                margin-top: 20px;
+            }
+            .alert-container {
+                margin: 20px 0;
+            }
+            .card-section {
+                margin-bottom: 30px;
+                border: 1px solid rgba(0,0,0,.125);
+                border-radius: 0.25rem;
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+            }
+            .card-header-section {
+                background-color: #6c757d;
+                color: white;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0" th:text="'Gestión de Sección: ' + ${nombreSeccion}"></h2>
+                    <h4 class="mb-0" th:text="'Periodo: ' + ${semestre} + ' ' + ${anio}"></h4>
+                </div>
+
+                <div class="card-body">
+                    <!-- Mensajes de retroalimentación -->
+                    <div class="alert-container">
+                        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                            <span th:text="${success}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                            <span th:text="${error}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Profesores -->
+                    <div class="card card-section">
+                        <div class="card-header card-header-section">
+                            <i class="bi bi-person-badge"></i> Profesores Disponibles
+                        </div>
+                        <div class="card-body">
+                            <form id="formProfesores" th:action="@{/matricula/asignar-profesores}" method="post">
+                                <input type="hidden" name="nombreSeccion" th:value="${nombreSeccion}">
+                                <input type="hidden" name="semestre" th:value="${semestre}">
+                                <input type="hidden" name="anio" th:value="${anio}">
+
+                                <div class="table-responsive section-table">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th class="checkbox-cell">
+                                                    <input type="checkbox" id="selectAllProfesores">
+                                                </th>
+                                                <th>Nombre</th>
+                                                <th>Profesión</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="profesor, stat : ${profesores}">
+                                                <td class="checkbox-cell">
+                                                    <input type="checkbox" name="profesoresSeleccionados" 
+                                                           th:value="${profesor.nombre}" class="profesor-checkbox">
+                                                </td>
+                                                <td th:text="${profesor.nombre}"></td>
+                                                <td th:text="${profesor.profesion}"></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-primary asignar-individual"
+                                                            th:data-nombre="${profesor.nombre}" data-tipo="profesor">
+                                                        <i class="bi bi-person-plus"></i> Asignar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${profesores.isEmpty()}">
+                                                <td colspan="4" class="text-center">No hay profesores disponibles</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="action-buttons">
+                                    <button type="submit" class="btn btn-success" id="asignarProfesores">
+                                        <i class="bi bi-save"></i> Asignar Profesores Seleccionados
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="asignarTodosProfesores">
+                                        <i class="bi bi-save-all"></i> Asignar Todos los Profesores
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Estudiantes -->
+                    <div class="card card-section">
+                        <div class="card-header card-header-section">
+                            <i class="bi bi-people-fill"></i> Estudiantes Matriculados
+                        </div>
+                        <div class="card-body">
+                            <form id="formEstudiantes" th:action="@{/matricula/asignar-estudiantes}" method="post">
+                                <input type="hidden" name="nombreSeccion" th:value="${nombreSeccion}">
+                                <input type="hidden" name="semestre" th:value="${semestre}">
+                                <input type="hidden" name="anio" th:value="${anio}">
+
+                                <div class="table-responsive section-table">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th class="checkbox-cell">
+                                                    <input type="checkbox" id="selectAllEstudiantes">
+                                                </th>
+                                                <th>Nombre</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="estudiante, stat : ${estudiantes}">
+                                                <td class="checkbox-cell">
+                                                    <input type="checkbox" name="estudiantesSeleccionados" 
+                                                           th:value="${estudiante.nombre}" class="estudiante-checkbox">
+                                                </td>
+                                                <td th:text="${estudiante.nombre}"></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-primary asignar-individual"
+                                                            th:data-nombre="${estudiante.nombre}" data-tipo="estudiante">
+                                                        <i class="bi bi-person-plus"></i> Asignar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${estudiantes.isEmpty()}">
+                                                <td colspan="3" class="text-center">No hay estudiantes matriculados</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="action-buttons">
+                                    <button type="submit" class="btn btn-success" id="asignarEstudiantes">
+                                        <i class="bi bi-save"></i> Asignar Estudiantes Seleccionados
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="asignarTodosEstudiantes">
+                                        <i class="bi bi-save-all"></i> Asignar Todos los Estudiantes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Navegación -->
+                    <div class="action-buttons d-flex justify-content-between">
+                        <a th:href="@{/matricula/desplegar-todas-secciones(semestre=${semestre}, anio=${anio})}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver a Secciones
+                        </a>
+                        <a th:href="@{/matricula/gestion-horario(nombreSeccion=${seccion.seccion}, semestre=${semestre}, anio=${anio})}" 
+                           class="btn btn-primary">
+                            Asignar horario
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de confirmación -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Confirmar Asignación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="modalMessage">
+                        ¿Está seguro que desea realizar esta asignación?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmButton">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                // Seleccionar/deseleccionar todos los profesores
+                $('#selectAllProfesores').change(function () {
+                    $('.profesor-checkbox').prop('checked', this.checked);
+                });
+
+                // Seleccionar/deseleccionar todos los estudiantes
+                $('#selectAllEstudiantes').change(function () {
+                    $('.estudiante-checkbox').prop('checked', this.checked);
+                });
+
+                // Asignar profesores seleccionados
+                $('#asignarProfesores').click(function (e) {
+                    e.preventDefault();
+                    const selected = $('.profesor-checkbox:checked').length;
+
+                    if (selected === 0) {
+                        alert('Seleccione al menos un profesor');
+                        return;
+                    }
+
+                    $('#modalTitle').text('Confirmar Asignación de Profesores');
+                    $('#modalMessage').text(`¿Asignar ${selected} profesor(es) a la sección?`);
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $('#formProfesores').submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+
+                // Asignar todos los profesores
+                $('#asignarTodosProfesores').click(function (e) {
+                    e.preventDefault();
+                    const total = $('.profesor-checkbox').length;
+
+                    if (total === 0) {
+                        alert('No hay profesores para asignar');
+                        return;
+                    }
+
+                    $('#modalTitle').text('Confirmar Asignación de Profesores');
+                    $('#modalMessage').text(`¿Asignar todos los ${total} profesores a la sección?`);
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $('.profesor-checkbox').prop('checked', true);
+                        $('#formProfesores').submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+
+                // Asignar estudiantes seleccionados
+                $('#asignarEstudiantes').click(function (e) {
+                    e.preventDefault();
+                    const selected = $('.estudiante-checkbox:checked').length;
+
+                    if (selected === 0) {
+                        alert('Seleccione al menos un estudiante');
+                        return;
+                    }
+
+                    $('#modalTitle').text('Confirmar Asignación de Estudiantes');
+                    $('#modalMessage').text(`¿Asignar ${selected} estudiante(s) a la sección?`);
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $('#formEstudiantes').submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+
+                // Asignar todos los estudiantes
+                $('#asignarTodosEstudiantes').click(function (e) {
+                    e.preventDefault();
+                    const total = $('.estudiante-checkbox').length;
+
+                    if (total === 0) {
+                        alert('No hay estudiantes para asignar');
+                        return;
+                    }
+
+                    $('#modalTitle').text('Confirmar Asignación de Estudiantes');
+                    $('#modalMessage').text(`¿Asignar todos los ${total} estudiantes a la sección?`);
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $('.estudiante-checkbox').prop('checked', true);
+                        $('#formEstudiantes').submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+
+                // Asignación individual
+                $('.asignar-individual').click(function () {
+                    const nombre = $(this).data('nombre');
+                    const tipo = $(this).data('tipo');
+                    const formId = tipo === 'profesor' ? '#formProfesores' : '#formEstudiantes';
+                    const checkboxClass = tipo === 'profesor' ? '.profesor-checkbox' : '.estudiante-checkbox';
+
+                    $('#modalTitle').text(`Confirmar Asignación de ${tipo === 'profesor' ? 'Profesor' : 'Estudiante'}`);
+                    $('#modalMessage').text(`¿Asignar a ${nombre} a la sección?`);
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $(checkboxClass).prop('checked', false);
+                        $(`input[value="${nombre}"]`).prop('checked', true);
+                        $(formId).submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+            });
+        </script>
+    </body>
+</html>

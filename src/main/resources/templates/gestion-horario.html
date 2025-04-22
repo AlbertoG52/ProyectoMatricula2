@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestión de Horario</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+        <style>
+            .checkbox-cell {
+                width: 50px;
+                text-align: center;
+            }
+            .section-table {
+                margin: 20px 0;
+            }
+            .section-title {
+                color: #495057;
+                border-bottom: 2px solid #dee2e6;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            .action-buttons {
+                margin-top: 20px;
+            }
+            .alert-container {
+                margin: 20px 0;
+            }
+            .card-section {
+                margin-bottom: 30px;
+                border: 1px solid rgba(0,0,0,.125);
+                border-radius: 0.25rem;
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+            }
+            .card-header-section {
+                background-color: #6c757d;
+                color: white;
+                font-weight: bold;
+            }
+            .asignacion-row {
+                background-color: #f8f9fa;
+                margin-bottom: 15px;
+                padding: 15px;
+                border-radius: 5px;
+                border-left: 4px solid #6c757d;
+            }
+            .horario-table {
+                margin-top: 20px;
+            }
+            .select-container {
+                margin-bottom: 15px;
+            }
+            .btn-agregar {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0" th:text="'Asignación de Horarios - ' + ${nombreSeccion}"></h2>
+                    <h4 class="mb-0" th:text="'Periodo: ' + ${semestre} + ' ' + ${anio}"></h4>
+                </div>
+
+                <div class="card-body">
+                    <!-- Mensajes de retroalimentación -->
+                    <div class="alert-container">
+                        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                            <span th:text="${success}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                            <span th:text="${error}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+
+                    <!-- Formulario para agregar nuevas asignaciones -->
+                    <div class="card card-section">
+                        <div class="card-header card-header-section">
+                            <i class="bi bi-plus-circle"></i> Agregar Nueva Asignación
+                        </div>
+                        <div class="card-body">
+                            <div class="row asignacion-row">
+                                <div class="col-md-4 select-container">
+                                    <label class="form-label">Profesor</label>
+                                    <select class="form-select select-profesor" required>
+                                        <option value="">Seleccione profesor</option>
+                                        <option th:each="profesor : ${profesores}"
+                                                th:value="${profesor.nombre}"
+                                                th:text="${profesor.nombre}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 select-container">
+                                    <label class="form-label">Curso</label>
+                                    <select class="form-select select-curso" required>
+                                        <option value="">Seleccione curso</option>
+                                        <option th:each="curso : ${cursos}"
+                                                th:value="${curso.nombreCurso}"
+                                                th:text="${curso.nombreCurso}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 select-container">
+                                    <label class="form-label">Horario</label>
+                                    <select class="form-select select-horario" required>
+                                        <option value="">Seleccione horario</option>
+                                        <option th:each="horario : ${horarios}"
+                                                th:value="${horario.id}"
+                                                th:text="${horario.dia} + ' ' + ${horario.hora}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end select-container">
+                                    <button type="button" class="btn btn-success btn-agregar">
+                                        <i class="bi bi-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de asignaciones a guardar -->
+                    <div class="card card-section">
+                        <div class="card-header card-header-section">
+                            <i class="bi bi-list-check"></i> Asignaciones Pendientes
+                        </div>
+                        <div class="card-body">
+                            <form id="formAsignaciones" th:action="@{/matricula/asignar-horarios}" method="post">
+                                <input type="hidden" name="nombreSeccion" th:value="${nombreSeccion}">
+                                <input type="hidden" name="semestre" th:value="${semestre}">
+                                <input type="hidden" name="anio" th:value="${anio}">
+
+                                <div id="listaAsignaciones">
+                                    <!-- Aquí se agregarán dinámicamente las asignaciones -->
+                                </div>
+
+                                <div class="action-buttons text-end">
+                                    <button type="submit" class="btn btn-primary" id="btnGuardar">
+                                        <i class="bi bi-save"></i> Guardar Todas las Asignaciones
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Horarios ya asignados -->
+                    <div class="card card-section">
+                        <div class="card-header card-header-section">
+                            <i class="bi bi-calendar-check"></i> Horarios Asignados
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover horario-table">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Profesor</th>
+                                            <th>Curso</th>
+                                            <th>Día</th>
+                                            <th>Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="asig : ${asignaciones}">
+                                            <td th:text="${asig.Nombre_Profesor}"></td>
+                                            <td th:text="${asig.Nombre_Curso}"></td>
+                                            <td th:text="${asig.Dia}"></td>
+                                            <td th:text="${asig.Hora}"></td>
+                                        </tr>
+                                        <tr th:if="${asignaciones.isEmpty()}">
+                                            <td colspan="4" class="text-center">No hay horarios asignados aún</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Navegación -->
+                    <div class="action-buttons">
+                        <a th:href="@{/matricula/desplegar-todas-secciones(semestre=${semestre}, anio=${anio})}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver a Secciones
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de confirmación -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar Asignación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Está seguro que desea guardar estas asignaciones de horario?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmButton">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                // Contador para IDs únicos
+                let contadorAsignaciones = 0;
+
+                // Agregar nueva asignación a la lista
+                $('.btn-agregar').click(function () {
+                    const profesor = $('.select-profesor').val();
+                    const curso = $('.select-curso').val();
+                    const horario = $('.select-horario').val();
+                    const horarioTexto = $('.select-horario option:selected').text();
+
+                    if (!profesor || !curso || !horario) {
+                        alert('Por favor complete todos los campos');
+                        return;
+                    }
+
+                    const idAsignacion = 'asignacion-' + contadorAsignaciones++;
+
+                    // Crear elemento HTML para la asignación
+                    const asignacionHTML = `
+                        <div class="asignacion-row mb-3" id="${idAsignacion}">
+                            <input type="hidden" name="asignaciones" value='{
+                                "profesor": "${profesor}",
+                                "curso": "${curso}",
+                                "horario": ${horario}
+                            }'>
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <strong>Profesor:</strong> ${profesor}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Curso:</strong> ${curso}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Horario:</strong> ${horarioTexto}
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button type="button" class="btn btn-sm btn-danger btn-eliminar" 
+                                            data-id="${idAsignacion}">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    // Agregar a la lista
+                    $('#listaAsignaciones').append(asignacionHTML);
+
+                    // Limpiar selección
+                    $('.select-profesor, .select-curso, .select-horario').val('');
+                });
+
+                // Eliminar asignación
+                $(document).on('click', '.btn-eliminar', function () {
+                    const id = $(this).data('id');
+                    $('#' + id).remove();
+                });
+
+                // Confirmación antes de guardar
+                $('#btnGuardar').click(function (e) {
+                    if ($('#listaAsignaciones').children().length === 0) {
+                        e.preventDefault();
+                        alert('Debe agregar al menos una asignación');
+                        return;
+                    }
+
+                    $('#confirmButton').off('click').on('click', function () {
+                        $('#formAsignaciones').submit();
+                    });
+
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                });
+            });
+        </script>
+    </body>
+</html>
