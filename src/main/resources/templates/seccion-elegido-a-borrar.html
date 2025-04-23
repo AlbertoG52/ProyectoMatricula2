@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Horario de Sección</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f5f5f5;
+                padding: 2rem;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+                background: white;
+                padding: 2rem;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            h2 {
+                text-align: center;
+                color: #333;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 2rem;
+            }
+            th, td {
+                padding: 0.75rem;
+                text-align: center;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background-color: #4CAF50;
+                color: white;
+            }
+            tr:hover {
+                background-color: #f1f1f1;
+            }
+            .back-button {
+                margin-top: 2rem;
+                display: inline-block;
+                padding: 0.6rem 1.2rem;
+                background-color: #4CAF50;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+            }
+            .back-button:hover {
+                background-color: #45a049;
+            }
+            .secondary-button {
+                display: inline-block;
+                margin-top: 2rem;
+                padding: 0.6rem 1.2rem;
+                background-color: #2196F3;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-left: 1rem;
+            }
+            .secondary-button:hover {
+                background-color: #0b7dda;
+            }
+            .danger-button {
+                background-color: #dc3545;
+                color: white;
+                margin-left: 1rem;
+            }
+            .danger-button:hover {
+                background-color: #c82333;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Horario de Sección</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Día</th>
+                        <th>Hora</th>
+                        <th>Curso</th>
+                        <th>Sección</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="fila : ${horario}">
+                        <td th:text="${fila.dia}">Lunes</td>
+                        <td th:text="${fila.hora}">08:00</td>
+                        <td th:text="${fila.curso}">Matemáticas</td>
+                        <td th:text="${fila.seccion}">2024 - A</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <a th:href="@{/matricula/periodo-elegido-borrar(semestre=${semestre}, anio=${anio})}" class="back-button">Volver</a>
+                <div>
+                    <a th:href="@{|/matricula/EstudiantesABorrar/${idSeccion}?semestre=${semestre}&anio=${anio}|}" 
+                       class="secondary-button">Ver Estudiantes</a>
+                    <a th:href="@{|/matricula/ProfesoresABorrar/${idSeccion}?semestre=${semestre}&anio=${anio}|}" 
+                       class="secondary-button">Ver Profesores</a>
+                    <button 
+                        class="btn danger-button"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#confirmModal"
+                        th:attr="data-id=${idSeccion}, data-semestre=${semestre}, data-anio=${anio}">
+                        Eliminar Matrícula
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Confirmación -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmModalLabel">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Estás seguro que deseas eliminar toda la programación de esta sección para el periodo 
+                        <span th:text="${semestre}">Semestre</span> -
+                        <span th:text="${anio}">Año</span>?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+        <!-- Script de redirección -->
+        <script>
+            let idSeccion = 0;
+            let semestre = '';
+            let anio = 0;
+
+            document.querySelector('button[data-bs-target="#confirmModal"]').addEventListener('click', function () {
+                idSeccion = this.getAttribute('data-id');
+                semestre = this.getAttribute('data-semestre');
+                anio = this.getAttribute('data-anio');
+            });
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+                const url = `/matricula/eliminar-programacion?idSeccion=${idSeccion}&semestre=${semestre}&anio=${anio}`;
+                window.location.href = url;
+            });
+        </script>
+    </body>
+</html>

@@ -80,26 +80,19 @@
                                                 </th>
                                                 <th>Nombre</th>
                                                 <th>Profesión</th>
-                                                <th>Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr th:each="profesor, stat : ${profesores}">
+                                            <tr th:each="profesor : ${profesores}">
                                                 <td class="checkbox-cell">
                                                     <input type="checkbox" name="profesoresSeleccionados" 
                                                            th:value="${profesor.nombre}" class="profesor-checkbox">
                                                 </td>
                                                 <td th:text="${profesor.nombre}"></td>
                                                 <td th:text="${profesor.profesion}"></td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-primary asignar-individual"
-                                                            th:data-nombre="${profesor.nombre}" data-tipo="profesor">
-                                                        <i class="bi bi-person-plus"></i> Asignar
-                                                    </button>
-                                                </td>
                                             </tr>
                                             <tr th:if="${profesores.isEmpty()}">
-                                                <td colspan="4" class="text-center">No hay profesores disponibles</td>
+                                                <td colspan="3" class="text-center">No hay profesores disponibles</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -108,9 +101,6 @@
                                 <div class="action-buttons">
                                     <button type="submit" class="btn btn-success" id="asignarProfesores">
                                         <i class="bi bi-save"></i> Asignar Profesores Seleccionados
-                                    </button>
-                                    <button type="button" class="btn btn-success" id="asignarTodosProfesores">
-                                        <i class="bi bi-save-all"></i> Asignar Todos los Profesores
                                     </button>
                                 </div>
                             </form>
@@ -136,25 +126,18 @@
                                                     <input type="checkbox" id="selectAllEstudiantes">
                                                 </th>
                                                 <th>Nombre</th>
-                                                <th>Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr th:each="estudiante, stat : ${estudiantes}">
+                                            <tr th:each="estudiante : ${estudiantes}">
                                                 <td class="checkbox-cell">
                                                     <input type="checkbox" name="estudiantesSeleccionados" 
                                                            th:value="${estudiante.nombre}" class="estudiante-checkbox">
                                                 </td>
                                                 <td th:text="${estudiante.nombre}"></td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-primary asignar-individual"
-                                                            th:data-nombre="${estudiante.nombre}" data-tipo="estudiante">
-                                                        <i class="bi bi-person-plus"></i> Asignar
-                                                    </button>
-                                                </td>
                                             </tr>
                                             <tr th:if="${estudiantes.isEmpty()}">
-                                                <td colspan="3" class="text-center">No hay estudiantes matriculados</td>
+                                                <td colspan="2" class="text-center">No hay estudiantes matriculados</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -163,9 +146,6 @@
                                 <div class="action-buttons">
                                     <button type="submit" class="btn btn-success" id="asignarEstudiantes">
                                         <i class="bi bi-save"></i> Asignar Estudiantes Seleccionados
-                                    </button>
-                                    <button type="button" class="btn btn-success" id="asignarTodosEstudiantes">
-                                        <i class="bi bi-save-all"></i> Asignar Todos los Estudiantes
                                     </button>
                                 </div>
                             </form>
@@ -178,30 +158,10 @@
                            class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Volver a Secciones
                         </a>
-                        <a th:href="@{/matricula/gestion-horario(nombreSeccion=${seccion.seccion}, semestre=${semestre}, anio=${anio})}" 
+                        <a th:href="@{/matricula/gestion-horario(nombreSeccion=${nombreSeccion}, semestre=${semestre}, anio=${anio})}" 
                            class="btn btn-primary">
-                            Asignar horario
+                            <i class="bi bi-calendar-plus"></i> Asignar Horarios
                         </a>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal de confirmación -->
-        <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Confirmar Asignación</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body" id="modalMessage">
-                        ¿Está seguro que desea realizar esta asignación?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="confirmButton">Confirmar</button>
                     </div>
                 </div>
             </div>
@@ -220,107 +180,6 @@
                 // Seleccionar/deseleccionar todos los estudiantes
                 $('#selectAllEstudiantes').change(function () {
                     $('.estudiante-checkbox').prop('checked', this.checked);
-                });
-
-                // Asignar profesores seleccionados
-                $('#asignarProfesores').click(function (e) {
-                    e.preventDefault();
-                    const selected = $('.profesor-checkbox:checked').length;
-
-                    if (selected === 0) {
-                        alert('Seleccione al menos un profesor');
-                        return;
-                    }
-
-                    $('#modalTitle').text('Confirmar Asignación de Profesores');
-                    $('#modalMessage').text(`¿Asignar ${selected} profesor(es) a la sección?`);
-
-                    $('#confirmButton').off('click').on('click', function () {
-                        $('#formProfesores').submit();
-                    });
-
-                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
-                });
-
-                // Asignar todos los profesores
-                $('#asignarTodosProfesores').click(function (e) {
-                    e.preventDefault();
-                    const total = $('.profesor-checkbox').length;
-
-                    if (total === 0) {
-                        alert('No hay profesores para asignar');
-                        return;
-                    }
-
-                    $('#modalTitle').text('Confirmar Asignación de Profesores');
-                    $('#modalMessage').text(`¿Asignar todos los ${total} profesores a la sección?`);
-
-                    $('#confirmButton').off('click').on('click', function () {
-                        $('.profesor-checkbox').prop('checked', true);
-                        $('#formProfesores').submit();
-                    });
-
-                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
-                });
-
-                // Asignar estudiantes seleccionados
-                $('#asignarEstudiantes').click(function (e) {
-                    e.preventDefault();
-                    const selected = $('.estudiante-checkbox:checked').length;
-
-                    if (selected === 0) {
-                        alert('Seleccione al menos un estudiante');
-                        return;
-                    }
-
-                    $('#modalTitle').text('Confirmar Asignación de Estudiantes');
-                    $('#modalMessage').text(`¿Asignar ${selected} estudiante(s) a la sección?`);
-
-                    $('#confirmButton').off('click').on('click', function () {
-                        $('#formEstudiantes').submit();
-                    });
-
-                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
-                });
-
-                // Asignar todos los estudiantes
-                $('#asignarTodosEstudiantes').click(function (e) {
-                    e.preventDefault();
-                    const total = $('.estudiante-checkbox').length;
-
-                    if (total === 0) {
-                        alert('No hay estudiantes para asignar');
-                        return;
-                    }
-
-                    $('#modalTitle').text('Confirmar Asignación de Estudiantes');
-                    $('#modalMessage').text(`¿Asignar todos los ${total} estudiantes a la sección?`);
-
-                    $('#confirmButton').off('click').on('click', function () {
-                        $('.estudiante-checkbox').prop('checked', true);
-                        $('#formEstudiantes').submit();
-                    });
-
-                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
-                });
-
-                // Asignación individual
-                $('.asignar-individual').click(function () {
-                    const nombre = $(this).data('nombre');
-                    const tipo = $(this).data('tipo');
-                    const formId = tipo === 'profesor' ? '#formProfesores' : '#formEstudiantes';
-                    const checkboxClass = tipo === 'profesor' ? '.profesor-checkbox' : '.estudiante-checkbox';
-
-                    $('#modalTitle').text(`Confirmar Asignación de ${tipo === 'profesor' ? 'Profesor' : 'Estudiante'}`);
-                    $('#modalMessage').text(`¿Asignar a ${nombre} a la sección?`);
-
-                    $('#confirmButton').off('click').on('click', function () {
-                        $(checkboxClass).prop('checked', false);
-                        $(`input[value="${nombre}"]`).prop('checked', true);
-                        $(formId).submit();
-                    });
-
-                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
                 });
             });
         </script>

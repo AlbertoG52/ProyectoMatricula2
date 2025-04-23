@@ -13,11 +13,14 @@ import com.example.demo.service.HorarioService;
 import com.example.demo.service.MatriculaService;
 import com.example.demo.service.PeriodoService;
 import com.example.demo.service.ProfesorService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -140,18 +143,19 @@ public class MatriculaController {
             @RequestParam String semestre,
             @RequestParam int anio,
             @RequestParam(required = false) Boolean showContinue,
-            Model model) {
+            Model model,
+            HttpServletRequest request) {
 
-        List<Map<String, Object>> estudiantes
-                = matriculaService.obtenerEstudiantesNoMatriculados(semestre, anio);
+        List<Map<String, Object>> estudiantes = matriculaService.obtenerEstudiantesNoMatriculados(semestre, anio);
 
-        model.addAttribute("estudiantes", estudiantes);
+        // Pasar parámetros de forma consistente
+        model.addAttribute("estudiantes", estudiantes != null ? estudiantes : Collections.emptyList());
         model.addAttribute("semestre", semestre);
         model.addAttribute("anio", anio);
+        model.addAttribute("showContinue", showContinue != null && showContinue);
 
-        if (showContinue != null && showContinue) {
-            model.addAttribute("showContinue", true);
-        }
+        // Para acceso a parámetros de request en la vista
+        model.addAttribute("requestParams", request.getParameterMap());
 
         return "desplegar-estudiantes-no-matriculados";
     }
@@ -198,11 +202,23 @@ public class MatriculaController {
             @RequestParam int anio,
             Model model) {
 
-        List<Map<String, Object>> secciones = matriculaService.obtenerTodasLasSecciones();
+        try {
+            List<Map<String, Object>> secciones = matriculaService.obtenerTodasLasSecciones();
 
-        model.addAttribute("secciones", secciones);
-        model.addAttribute("semestre", semestre);
-        model.addAttribute("anio", anio);
+            // Validación adicional
+            if (secciones == null) {
+                secciones = Collections.emptyList();
+                model.addAttribute("warning", "No se pudieron cargar las secciones");
+            }
+
+            model.addAttribute("secciones", secciones);
+            model.addAttribute("semestre", semestre);
+            model.addAttribute("anio", anio);
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al cargar las secciones: " + e.getMessage());
+            model.addAttribute("secciones", Collections.emptyList());
+        }
 
         return "desplegar-todas-secciones";
     }
@@ -299,7 +315,6 @@ public class MatriculaController {
         return "redirect:/matricula/gestion-seccion";
     }
 
-
     @GetMapping("/gestion-horario")
     public String gestionHorario(
             @RequestParam String nombreSeccion,
@@ -307,11 +322,10 @@ public class MatriculaController {
             @RequestParam int anio,
             Model model) {
 
-        // Obtener datos necesarios
         List<Map<String, Object>> profesores = profesorService.obtenerProfesoresPorSeccionYPeriodo(nombreSeccion, semestre, anio);
         List<CursoEntity> cursos = cursoService.obtenerTodosLosCursos();
         List<Map<String, Object>> horarios = horarioService.obtenerTodosHorarios();
-        List<Map<String, Object>> asignacionesActuales = matriculaService.obtenerAsignacionesActuales(nombreSeccion);
+        List<Map<String, Object>> asignacionesPorPeriodo = matriculaService.obtenerAsignacionesPorPeriodo(semestre, anio);
 
         model.addAttribute("nombreSeccion", nombreSeccion);
         model.addAttribute("semestre", semestre);
@@ -319,27 +333,49 @@ public class MatriculaController {
         model.addAttribute("profesores", profesores);
         model.addAttribute("cursos", cursos);
         model.addAttribute("horarios", horarios);
-        model.addAttribute("asignaciones", asignacionesActuales);
+        model.addAttribute("asignaciones", asignacionesPorPeriodo); // <- se mantiene el mismo nombre para evitar cambios en la vista
 
         return "gestion-horario";
     }
 
-    @PostMapping("/asignar-horarios")
-    public String asignarHorarios(
+    @PostMapping("/agregar-asignacion")
+    public String agregarAsignacion(
             @RequestParam String nombreSeccion,
             @RequestParam String semestre,
             @RequestParam int anio,
-            @RequestParam(value = "asignaciones", required = false) List<String> asignacionesJson,
+            @RequestParam String profesor,
+            @RequestParam String curso,
+            @RequestParam Long horario,
             RedirectAttributes redirectAttributes) {
 
-        if (asignacionesJson == null || asignacionesJson.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Debe agregar al menos una asignación de horario");
+        try {
+            matriculaService.agregarAsignacionHorario(profesor, curso, horario, nombreSeccion);
+            redirectAttributes.addFlashAttribute("success", "Asignación agregada correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al agregar asignación: " + e.getMessage());
+        }
+
+        return "redirect:/matricula/gestion-horario?nombreSeccion=" + URLEncoder.encode(nombreSeccion, StandardCharsets.UTF_8)
+                + "&semestre=" + semestre
+                + "&anio=" + anio;
+    }
+
+    @PostMapping("/eliminar-asignaciones")
+    public String eliminarAsignaciones(
+            @RequestParam String nombreSeccion,
+            @RequestParam String semestre,
+            @RequestParam int anio,
+            @RequestParam(value = "asignacionesSeleccionadas", required = false) List<Long> idsHorarios,
+            RedirectAttributes redirectAttributes) {
+
+        if (idsHorarios == null || idsHorarios.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Debe seleccionar al menos una asignación para eliminar");
         } else {
             try {
-                matriculaService.asignarMultiplesHorarios(asignacionesJson, nombreSeccion);
-                redirectAttributes.addFlashAttribute("success", asignacionesJson.size() + " horarios asignados correctamente");
+                matriculaService.eliminarAsignacionesHorario(idsHorarios);
+                redirectAttributes.addFlashAttribute("success", idsHorarios.size() + " asignaciones eliminadas correctamente");
             } catch (Exception e) {
-                redirectAttributes.addFlashAttribute("error", "Error al asignar horarios: " + e.getMessage());
+                redirectAttributes.addFlashAttribute("error", "Error al eliminar asignaciones: " + e.getMessage());
             }
         }
 
@@ -347,4 +383,109 @@ public class MatriculaController {
                 + "&semestre=" + semestre
                 + "&anio=" + anio;
     }
+
+    @GetMapping("/eliminar-asignacion")
+    public String eliminarAsignacionIndividual(
+            @RequestParam Long idHorario,
+            @RequestParam String nombreSeccion,
+            @RequestParam String semestre,
+            @RequestParam int anio,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            matriculaService.eliminarAsignacionHorario(idHorario, nombreSeccion);
+            redirectAttributes.addFlashAttribute("success", "Asignación eliminada correctamente");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "No se puede eliminar: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al eliminar asignación: " + e.getMessage());
+        }
+
+        return "redirect:/matricula/gestion-horario?nombreSeccion="
+                + URLEncoder.encode(nombreSeccion, StandardCharsets.UTF_8)
+                + "&semestre=" + semestre + "&anio=" + anio;
+    }
+
+    @GetMapping("/elegir-matricula-a-borrar")
+    public String elegirPeriodosDeMatriculaABorrar(Model model) {
+        List<PeriodoEntity> periodos = periodoService.obtenerPeriodosMatricula();
+        model.addAttribute("periodos", periodos);
+        return "periodo-a-borrar";
+    }
+
+    @GetMapping("/periodo-elegido-borrar")
+    public String verSeccionesPorPeriodoABorrar(@RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+        List<SeccionEntity> secciones = matriculaService.obtenerSeccionesPorPeriodo(semestre, anio);
+        model.addAttribute("semestre", semestre);
+        model.addAttribute("anio", anio);
+        model.addAttribute("secciones", secciones);
+        return "periodo-elegido-borrar";
+    }
+
+    @GetMapping("/seccion-elegido-borrar/{id}")
+    public String HorarioSeccionABorrar(
+            @PathVariable("id") Long id,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> horario = matriculaService.obtenerHorarioPorSeccion(id);
+
+        // Pasar todos los parámetros al modelo
+        model.addAttribute("horario", horario);
+        model.addAttribute("idSeccion", id);  // Necesario para los botones
+        model.addAttribute("semestre", semestre);  // Necesario para los botones
+        model.addAttribute("anio", anio);  // Necesario para los botones
+
+        return "seccion-elegido-a-borrar";
+    }
+
+    @GetMapping("/eliminar-programacion")
+    public String eliminarProgramacionSeccion(
+            @RequestParam("idSeccion") Long idSeccion,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio
+    ) {
+        matriculaService.eliminarProgramacionSeccion(idSeccion, semestre, anio);
+        return "redirect:/matricula"; // Redirige a página principal de matrícula
+    }
+    
+        @GetMapping("/EstudiantesABorrar/{id}")
+    public String verEstudiantesSeccionPorBorrar(
+            @PathVariable("id") Long idSeccion,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> estudiantes = matriculaService.obtenerEstudiantesPorSeccionPeriodo(idSeccion, semestre, anio);
+
+        model.addAttribute("estudiantes", estudiantes);
+        model.addAttribute("idSeccion", idSeccion);
+        model.addAttribute("semestre", semestre);
+        model.addAttribute("anio", anio);
+
+        return "estudiantes-seccion-borrar";
+    }
+
+    @GetMapping("/ProfesoresABorrar/{id}")
+    public String verProfesoresSeccionPorBorrar(
+            @PathVariable("id") Long idSeccion,
+            @RequestParam("semestre") String semestre,
+            @RequestParam("anio") int anio,
+            Model model) {
+
+        List<Map<String, Object>> profesores = matriculaService.obtenerProfesoresPorSeccionPeriodo(idSeccion, semestre, anio);
+
+        model.addAttribute("profesores", profesores);
+        model.addAttribute("idSeccion", idSeccion);
+        model.addAttribute("semestre", semestre);
+        model.addAttribute("anio", anio);
+
+        return "profesores-seccion-borrar";
+    }
+
 }

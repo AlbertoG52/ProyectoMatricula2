@@ -7,17 +7,22 @@ package com.example.demo.service;
 import com.example.demo.entity.GeneracionEntity;
 import com.example.demo.entity.GrupoEntity;
 import com.example.demo.entity.SeccionEntity;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.hibernate.dialect.OracleTypes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -182,24 +187,33 @@ public class MatriculaService {
     }
 
     public List<Map<String, Object>> obtenerTodasLasSecciones() {
-        return jdbcTemplate.execute((Connection conn) -> {
-            List<Map<String, Object>> secciones = new ArrayList<>();
+        try {
+            return jdbcTemplate.execute((Connection conn) -> {
+                List<Map<String, Object>> secciones = new ArrayList<>();
 
-            try (CallableStatement cs = conn.prepareCall("{ call PKG_LISTADOS_APP.Mostrar_Todas_Las_Secciones(?) }")) {
-                cs.registerOutParameter(1, OracleTypes.CURSOR);
-                cs.execute();
+                try (CallableStatement cs = conn.prepareCall("{ call PKG_LISTADOS_APP.Mostrar_Todas_Las_Secciones(?) }")) {
+                    cs.registerOutParameter(1, OracleTypes.CURSOR);
+                    cs.execute();
 
-                try (ResultSet rs = (ResultSet) cs.getObject(1)) {
-                    while (rs.next()) {
-                        Map<String, Object> seccion = new HashMap<>();
-                        seccion.put("idSeccion", rs.getLong("ID_Seccion"));
-                        seccion.put("seccion", rs.getString("Seccion"));
-                        secciones.add(seccion);
+                    try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                        while (rs.next()) {
+                            Map<String, Object> seccion = new HashMap<>();
+                            seccion.put("idSeccion", rs.getLong("ID_Seccion"));
+                            seccion.put("seccion", rs.getString("Seccion"));
+                            secciones.add(seccion);
+                        }
                     }
+                } catch (SQLException e) {
+                    System.err.println("Error al obtener secciones: " + e.getMessage());
+                    throw new DataAccessException("Error en base de datos al obtener secciones", e) {
+                    };
                 }
-            }
-            return secciones;
-        });
+                return secciones;
+            });
+        } catch (DataAccessException e) {
+            System.err.println("Error en obtenerTodasLasSecciones: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     public List<Map<String, Object>> obtenerEstudiantesConMatricula(String semestre, int anio) {
@@ -272,25 +286,26 @@ public class MatriculaService {
         });
     }
 
-    public List<Map<String, Object>> obtenerAsignacionesActuales(String nombreSeccion) {
+// Modificación en el Service
+    public List<Map<String, Object>> obtenerAsignacionesPorPeriodo(String semestre, int anio) {
         return jdbcTemplate.execute((Connection conn) -> {
             List<Map<String, Object>> asignaciones = new ArrayList<>();
-
-            try (CallableStatement cs = conn.prepareCall(
-                    "{ call Obtener_Asignaciones_Actuales(?, ?) }")) {
-
-                cs.setString(1, nombreSeccion);
-                cs.registerOutParameter(2, OracleTypes.CURSOR);
+            try (CallableStatement cs = conn.prepareCall("{ call Obtener_Asignaciones_Por_Periodo(?, ?, ?) }")) {
+                cs.setString(1, semestre);
+                cs.setInt(2, anio);
+                cs.registerOutParameter(3, OracleTypes.CURSOR);
                 cs.execute();
 
-                try (ResultSet rs = (ResultSet) cs.getObject(2)) {
+                try (ResultSet rs = (ResultSet) cs.getObject(3)) {
                     while (rs.next()) {
                         Map<String, Object> asignacion = new HashMap<>();
-                        asignacion.put("Nombre_Profesor", rs.getString("Nombre_Profesor"));
-                        asignacion.put("Nombre_Curso", rs.getString("Nombre_Curso"));
-                        asignacion.put("Dia", rs.getString("Dia"));
-                        asignacion.put("Hora", rs.getString("Hora"));
-                        asignacion.put("ID_Horario", rs.getLong("ID_Horario"));
+                        asignacion.put("idHorario", rs.getLong("ID_HORARIO"));
+                        asignacion.put("nombreSeccion", rs.getString("NOMBRE_SECCION"));
+                        asignacion.put("nombreProfesor", rs.getString("NOMBRE_PROFESOR"));
+                        asignacion.put("nombreCurso", rs.getString("NOMBRE_CURSO"));
+                        asignacion.put("dia", rs.getString("DIA"));
+                        asignacion.put("hora", rs.getString("HORA"));
+
                         asignaciones.add(asignacion);
                     }
                 }
@@ -299,31 +314,95 @@ public class MatriculaService {
         });
     }
 
-    public void asignarMultiplesHorarios(List<String> asignacionesJson, String nombreSeccion) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public void agregarAsignacionHorario(String nombreProfesor, String nombreCurso, Long idHorario, String nombreSeccion) {
+        try {
+            jdbcTemplate.update(
+                    "{call Asignar_Horario_Profesor_Por_Nombre(?, ?, ?, ?)}",
+                    nombreProfesor,
+                    nombreCurso,
+                    nombreSeccion,
+                    idHorario
+            );
+        } catch (DataAccessException e) {
+            // Extraer el mensaje de error de Oracle si está disponible
+            String errorMessage = "Error al asignar horario";
+            if (e.getCause() instanceof SQLException) {
+                SQLException sqlEx = (SQLException) e.getCause();
+                errorMessage = sqlEx.getMessage();
 
+                // Manejar errores específicos de Oracle
+                if (sqlEx.getErrorCode() >= 20000 && sqlEx.getErrorCode() <= 20999) {
+                    // Estos son los errores personalizados de tu procedimiento
+                    errorMessage = sqlEx.getMessage().replace("ORA-200XX: ", "");
+                }
+            }
+            throw new RuntimeException(errorMessage, e);
+        }
+    }
+
+    public void eliminarAsignacionHorario(Long idHorario, String nombreSeccion) {
+        jdbcTemplate.execute((Connection conn) -> {
+            // Primero obtener el ID_Seccion
+            Long idSeccion = jdbcTemplate.queryForObject(
+                    "SELECT s.ID_Seccion FROM Seccion s "
+                    + "JOIN Generacion g ON s.ID_Generacion = g.ID_Generacion "
+                    + "JOIN Grupo gr ON s.ID_Grupo = gr.ID_Grupo "
+                    + "WHERE g.Generacion || '-' || gr.Grupo = ?",
+                    Long.class, nombreSeccion);
+
+            // Verificar si hay matrículas dependientes
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM Matricula_Curso_Estudiantes mce "
+                    + "JOIN Curso_Seccion_Horario csh ON mce.ID_Curso = csh.ID_Curso "
+                    + "WHERE csh.ID_Horario = ? AND csh.ID_Seccion = ?",
+                    Integer.class, idHorario, idSeccion);
+
+            if (count > 0) {
+                throw new DataIntegrityViolationException(
+                        "No se puede eliminar el horario porque tiene matrículas asociadas");
+            }
+
+            // Si no hay dependencias, proceder con la eliminación
+            jdbcTemplate.update(
+                    "DELETE FROM Curso_Seccion_Horario WHERE ID_Horario = ? AND ID_Seccion = ?",
+                    idHorario, idSeccion);
+            return null;
+        });
+    }
+
+    public void eliminarAsignacionesHorario(List<Long> idsHorarios) {
         jdbcTemplate.execute((Connection conn) -> {
             conn.setAutoCommit(false);
             try {
-                for (String jsonAsignacion : asignacionesJson) {
-                    Map<String, Object> asignacion = objectMapper.readValue(jsonAsignacion, Map.class);
-
-                    try (CallableStatement cs = conn.prepareCall(
-                            "{ call Asignar_Horario_Profesor_Por_Nombre(?, ?, ?, ?) }")) {
-
-                        cs.setString(1, (String) asignacion.get("profesor"));
-                        cs.setString(2, (String) asignacion.get("curso"));
-                        cs.setString(3, nombreSeccion);
-                        cs.setLong(4, ((Number) asignacion.get("horario")).longValue());
-                        cs.execute();
+                for (Long id : idsHorarios) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "DELETE FROM Curso_Seccion_Horario WHERE ID_Horario = ?")) {
+                        ps.setLong(1, id);
+                        ps.executeUpdate();
                     }
                 }
                 conn.commit();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 conn.rollback();
-                throw new RuntimeException("Error en asignación múltiple: " + e.getMessage(), e);
+                throw e;
             }
             return null;
         });
     }
+
+    public void eliminarProgramacionSeccion(Long idSeccion, String semestre, int anio) {
+        jdbcTemplate.execute((Connection con) -> {
+            try (CallableStatement cs = con.prepareCall("{ call Eliminar_Programacion_Seccion_Periodo(?, ?, ?) }")) {
+                cs.setLong(1, idSeccion);
+                cs.setString(2, semestre);
+                cs.setInt(3, anio);
+                cs.execute();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error al ejecutar Eliminar_Programacion_Seccion_Periodo", e) {
+                };
+            }
+            return null;
+        });
+    }
+
 }

@@ -108,9 +108,7 @@
 
                                 <!-- Botón de Continuar (visible siempre, con lógica mejorada) -->
                                 <a th:href="@{/matricula/agregar(semestre=${semestre}, anio=${anio})}" 
-                                   class="btn continue-btn text-white"
-                                   th:classappend="${estudiantes.isEmpty() ? '' : 'd-none'}"
-                                   th:if="${param.showContinue != null or estudiantes.isEmpty() or success}">
+                                   class="btn continue-btn text-white">
                                     <i class="bi bi-arrow-right-circle"></i> Continuar
                                 </a>
                             </div>

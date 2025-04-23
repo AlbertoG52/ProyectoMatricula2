@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Profesores de Sección</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                margin: 2rem auto;
+                width: 80%;
+                max-width: 1200px;
+                background: white;
+                padding: 2rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            .titulo {
+                text-align: center;
+                margin-bottom: 0.5rem;
+                color: #333;
+                font-size: 2rem;
+            }
+            .subtitulo {
+                text-align: center;
+                margin-bottom: 2rem;
+                color: #555;
+                font-size: 1.2rem;
+                font-weight: normal;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1.5rem;
+            }
+            th {
+                background-color: #4CAF50;
+                color: white;
+                padding: 1rem;
+                text-align: left;
+            }
+            td {
+                padding: 1rem;
+                border-bottom: 1px solid #eee;
+            }
+            tr:hover {
+                background-color: #f9f9f9;
+            }
+            .back-button {
+                display: inline-block;
+                margin-top: 2rem;
+                padding: 0.8rem 1.5rem;
+                background-color: #6c757d;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                transition: background-color 0.3s;
+            }
+            .back-button:hover {
+                background-color: #5a6268;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="titulo">Profesores de la Sección</h1>
+            <h3 class="subtitulo" th:text="'Periodo: ' + ${semestre} + ' ' + ${anio}"></h3>
+
+            <!-- Tabla de profesores -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre del Profesor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="profesor : ${profesores}">
+                        <td th:text="${profesor.nombre}"></td>
+                    </tr>
+                    <tr th:if="${profesores.isEmpty()}">
+                        <td colspan="1" style="text-align: center;">No se encontraron profesores</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a th:href="@{|/matricula/seccion-elegido-borrar/${idSeccion}?semestre=${semestre}&anio=${anio}|}" 
+               class="back-button">Volver al Horario</a>
+        </div>
+    </body>
+</html>
