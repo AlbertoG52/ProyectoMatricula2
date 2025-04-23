@@ -64,7 +64,7 @@
                                             <input type="checkbox" id="selectAll">
                                         </th>
                                         <th>Nombre del Estudiante</th>
-                                        <th>Acción Individual</th>
+                                        <th>Matricular</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -88,25 +88,25 @@
                             </table>
                         </div>
 
-                        <!-- Botón de Continuar - Versión Mejorada -->
-                        <div class="action-buttons d-flex justify-content-between">
-                            <div>
-                                <a th:href="@{/matricula}" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i> Volver
-                                </a>
-                            </div>
-                            <div>
+                        <!-- Botones de acción - Versión modificada para alinear todos en una fila -->
+                        <div class="action-buttons d-flex justify-content-between align-items-center">
+                            <a th:href="@{/matricula}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </a>
+
+                            <!-- Contenedor para los botones de matrícula y continuar -->
+                            <div class="d-flex gap-2">
                                 <!-- Botones de matrícula (ocultos cuando no hay estudiantes) -->
-                                <div th:unless="${estudiantes.isEmpty()}">
-                                    <button type="submit" class="btn btn-success me-2" id="matricularSeleccionados">
+                                <div th:unless="${estudiantes.isEmpty()}" class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success" id="matricularSeleccionados">
                                         <i class="bi bi-save"></i> Matricular Seleccionados
                                     </button>
-                                    <button type="button" class="btn btn-success me-2" id="matricularTodos">
+                                    <button type="button" class="btn btn-success" id="matricularTodos">
                                         <i class="bi bi-save-all"></i> Matricular Todos
                                     </button>
                                 </div>
 
-                                <!-- Botón de Continuar (visible siempre, con lógica mejorada) -->
+                                <!-- Botón de Continuar -->
                                 <a th:href="@{/matricula/agregar(semestre=${semestre}, anio=${anio})}" 
                                    class="btn continue-btn text-white">
                                     <i class="bi bi-arrow-right-circle"></i> Continuar

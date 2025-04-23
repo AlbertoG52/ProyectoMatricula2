@@ -7,7 +7,6 @@ package com.example.demo.controller;
 import com.example.demo.entity.CursoEntity;
 import com.example.demo.entity.PeriodoEntity;
 import com.example.demo.entity.SeccionEntity;
-import com.example.demo.entity.ProfesorEntity;
 import com.example.demo.service.CursoService;
 import com.example.demo.service.HorarioService;
 import com.example.demo.service.MatriculaService;

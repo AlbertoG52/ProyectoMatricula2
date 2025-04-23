@@ -34,7 +34,8 @@
                         <i class="bi bi-people-fill"></i> Asignar Secciones y Horarios
                     </a>
                     
-                    <a th:href="@{/matricula}" class="btn btn-secondary dashboard-button">
+                    <a th:href="@{/matricula/desplegar-estudiantes-no-matriculados(semestre=${semestre}, anio=${anio})}" 
+                       class="btn btn-secondary dashboard-button">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
                 </div>
